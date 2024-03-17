@@ -34,18 +34,28 @@ func FileNameWithoutExtension(fileName string) string {
 	return strings.TrimSuffix(fileName, filepath.Ext(fileName))
 }
 
-func SaveUploadFile(c *gin.Context, file *multipart.FileHeader, randomName bool) (string, error) {
+func SaveUploadFileViaRandName(c *gin.Context, file *multipart.FileHeader) (string, error) {
 	// 确保目录存在，不存在创建
 	dirName := fmt.Sprintf("storage/uploads/files/%s/", app.TimenowInTimezone().Format("2006/01/02"))
 	helpers.IsNotExistMkDir(dirName)
 
 	// 保存文件
-	var fileName string
-	if randomName {
-		fileName = randomNameFromUploadFile(file)
-	} else {
-		fileName = file.Filename
+	fileName := randomNameFromUploadFile(file)
+	filePath := dirName + fileName
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		return "", err
 	}
+
+	return filePath, nil
+}
+
+func SaveUploadFile(c *gin.Context, file *multipart.FileHeader) (string, error) {
+	// 确保目录存在，不存在创建
+	dirName := fmt.Sprintf("storage/uploads/files/%s/", app.TimenowInTimezone().Format("2006/01/02"))
+	helpers.IsNotExistMkDir(dirName)
+
+	// 保存文件
+	fileName := file.Filename
 	filePath := dirName + fileName
 	if err := c.SaveUploadedFile(file, filePath); err != nil {
 		return "", err
